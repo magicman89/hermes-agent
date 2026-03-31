@@ -327,14 +327,30 @@ LLM_MODEL=meta-llama/Llama-3.1-70B-Instruct
 # Build and start llama-server
 cmake -B build && cmake --build build --config Release
 ./build/bin/llama-server \
-  -m models/llama-3.1-8b-instruct-Q4_K_M.gguf \
+  --jinja -fa \
+  -m models/qwen2.5-coder-32b-instruct-Q4_K_M.gguf \
   --port 8080 --host 0.0.0.0
-
-# Configure Hermes
-OPENAI_BASE_URL=http://localhost:8080/v1
-OPENAI_API_KEY=dummy
-LLM_MODEL=llama-3.1-8b-instruct
 ```
+
+Then configure Hermes to point at it:
+
+```bash
+hermes model
+# Select "Custom endpoint (self-hosted / VLLM / etc.)"
+# Enter URL: http://localhost:8080/v1
+# Skip API key (local servers don't need one)
+# Enter model name — or leave blank to auto-detect if only one model is loaded
+```
+
+This saves the endpoint to `config.yaml` so it persists across sessions.
+
+:::caution `--jinja` is required for tool calling
+Without `--jinja`, llama-server ignores the `tools` parameter entirely. The model will try to call tools by writing JSON in its response text, but Hermes won't recognize it as a tool call — you'll see raw JSON like `{"name": "web_search", ...}` printed as a message instead of an actual search.
+
+Native tool calling support (best performance): Llama 3.x, Qwen 2.5 (including Coder), Hermes 2/3, Mistral, DeepSeek, Functionary. All other models use a generic handler that works but may be less efficient. See the [llama.cpp function calling docs](https://github.com/ggml-org/llama.cpp/blob/master/docs/function-calling.md) for the full list.
+
+You can verify tool support is active by checking `http://localhost:8080/props` — the `chat_template` field should be present.
+:::
 
 :::tip
 Download GGUF models from [Hugging Face](https://huggingface.co/models?library=gguf). Q4_K_M quantization offers the best balance of quality vs. memory usage.
