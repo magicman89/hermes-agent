@@ -1,0 +1,5 @@
+mcp_servers:
+  bossbot:
+    url: "https://openclaw.michaelblasche.com/mcp"
+    headers:
+      Authorization: "Bearer 21a1c626ccdd2998787e08f53845f5dc7e74f3267664f29c6a933ecf423d4d22"
