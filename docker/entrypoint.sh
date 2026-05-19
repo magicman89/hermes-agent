@@ -5,6 +5,11 @@ set -e
 HERMES_HOME="${HERMES_HOME:-/opt/data}"
 INSTALL_DIR="/opt/hermes"
 
+# Set a generous shutdown grace period to avoid asyncio executor thread timeout warnings.
+# Python's default is 300s which causes RuntimeWarning logs on every clean shutdown.
+# This gives threads up to 30s to finish before the event loop closes.
+export HERMES_TUI_GATEWAY_SHUTDOWN_GRACE_S="${HERMES_TUI_GATEWAY_SHUTDOWN_GRACE_S:-30}"
+
 # --- Privilege dropping via gosu ---
 # When started as root (the default for Docker, or fakeroot in rootless Podman),
 # optionally remap the hermes user/group to match host-side ownership, fix volume
