@@ -107,6 +107,23 @@ if [ -d "$INSTALL_DIR/skills" ]; then
     python3 "$INSTALL_DIR/tools/skills_sync.py"
 fi
 
+# Reset bundled skills that conflict with local versions
+# This ensures kanban-orchestrator and yuanbao use the latest bundled versions
+echo "Resetting conflicting bundled skills..."
+hermes skills reset kanban-orchestrator 2>/dev/null || true
+hermes skills reset yuanbao 2>/dev/null || true
+echo "Skills reset complete."
+
+# Patch compaction model if MiniMax-Text-01 is configured (not supported on free plan)
+# Falls back to a supported model via HERMES_SUMMARY_MODEL env var or openai/gpt-4o-mini
+if [ -f "${HERMES_HOME}/config.yaml" ]; then
+    if grep -q "MiniMax-Text-01" "${HERMES_HOME}/config.yaml"; then
+        FALLBACK_MODEL="${HERMES_SUMMARY_MODEL:-openai/gpt-4o-mini}"
+        echo "WARNING: MiniMax-Text-01 detected in config - replacing with ${FALLBACK_MODEL}"
+        sed -i "s|MiniMax-Text-01|${FALLBACK_MODEL}|g" "${HERMES_HOME}/config.yaml"
+    fi
+fi
+
 # Optionally start `hermes dashboard` as a side-process.
 #
 # Toggled by HERMES_DASHBOARD=1 (also accepts "true"/"yes", case-insensitive).
